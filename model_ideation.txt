@@ -1,0 +1,70 @@
+====Ownership====
+	-land
+	-valuables
+	-gold
+	-titles
+	-agreements
+	-means of production
+
+
+===Primary Good Production===
+	-timber
+	-Agriculture
+		-food agriculture
+		-flax
+	-Livestock
+		-meat
+		-skins
+		-milk
+	-mining 
+		-iron 
+		-tin 
+		-lead
+		-silver/gold
+		-coal 
+
+===Secondary Good Production===
+	-Metal tools
+		-Weapons
+		-plows
+		-animal shoes
+	-Relics
+	-Art
+	-Clothing
+	-Livestock
+		-meat
+		-skins
+		-milk
+	-alcohol
+	-books
+	-shoes
+	-meals
+
+
+=====Services=====
+	-tutoring
+	-inns
+	-shops
+	-money lender
+	-absolution
+	-wagon repair
+	-wagon usage
+	-ferry
+	-boat rental
+	-builder
+	-administration
+	-usage of means of production
+	-land rental
+	-Entertainment
+
+=====Illegal activities=====
+	-fencing (buys and sells stolen goods)
+	-sabotogue (reduce production of goods)
+	-cursing/hobbling (reduce good production)
+	-thievery (take Ownership)
+	-kidnapping (take person)
+	-assassination (take life)
+	-possessing
+	-protection services
+
+

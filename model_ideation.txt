@@ -10,8 +10,10 @@
 ===Primary Good Production===
 	-timber
 	-Agriculture
-		-food agriculture
+		-other edible
 		-flax
+		-grain
+			-
 	-Livestock
 		-meat
 		-skins

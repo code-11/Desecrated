@@ -2,16 +2,17 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class MainMenu : MonoBehaviour {
-	public Button lvlOne;
+	public Button lvlOneBtn;
     void Start()
     {
-        lvlOne.onClick.AddListener(onLvlOneClick);
+        lvlOneBtn.onClick.AddListener(onLvlOneClick);
     }
 
     void onLvlOneClick()
     {
-        Debug.Log("You have clicked the button!");
+        SceneManager.LoadScene(Globals.LevelOne, LoadSceneMode.Single);
     }
 }

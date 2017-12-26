@@ -9,18 +9,18 @@ public class PlayerMovement : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 		float xMov = Input.GetAxisRaw("Horizontal");
-		float yMov = Input.GetAxisRaw("Vertical");
+		float zMov = Input.GetAxisRaw("Vertical");
 		float x=transform.position.x;
 		float y=transform.position.y;
 		float z=transform.position.z;
-		Vector2 movDelta= new Vector2(xMov,yMov);
+		Vector3 movDelta= new Vector3(xMov,0,zMov);
 		movDelta.Normalize();
 		movDelta*=speed;
 		movDelta*=Time.deltaTime;
-		float radius=.155f;
-		Vector2 newPos=new Vector2(x+movDelta.x,y+movDelta.y);
-		Collider2D collider=Physics2D.OverlapCircle(newPos,radius);
-		if (collider==null){
+		float radius=.1f;
+		Vector3 newPos=new Vector3(x+movDelta.x,0,z+movDelta.z);
+		Collider[] colliders=Physics.OverlapSphere(newPos,radius);
+		if (colliders.Length==0){
 			transform.Translate(movDelta);
 		}
 	}

@@ -18,7 +18,7 @@ public class PlayerMovement : MonoBehaviour {
 		movDelta*=speed;
 		movDelta*=Time.deltaTime;
 		float radius=.1f;
-		Vector3 newPos=new Vector3(x+movDelta.x,0,z+movDelta.z);
+		Vector3 newPos=new Vector3(x+movDelta.x,y,z+movDelta.z);
 		Collider[] colliders=Physics.OverlapSphere(newPos,radius);
 		if (colliders.Length==0){
 			transform.Translate(movDelta);

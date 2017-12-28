@@ -7,7 +7,7 @@ public class Clock : MonoBehaviour {
 	private float lastTickTime;
 	private float numTicks=0;
 	public float tickDuration=100; 
-	private IList<ITickable> events;
+	private IList<ITickable> events=new List<ITickable>();
 
 	private int TICKS_PER_HOUR=100;
 	private int HOURS_PER_DAY=10;
@@ -39,8 +39,10 @@ public class Clock : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		lastTickTime=0;
-		events=new List<ITickable>();
-		events.Add(new DebugTickable());
+	}
+
+	public void subscribe(ITickable evt){
+		events.Add(evt);
 	}
 	
 	private void callOnTicks(){

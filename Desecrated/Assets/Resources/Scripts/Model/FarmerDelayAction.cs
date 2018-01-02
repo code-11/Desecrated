@@ -2,8 +2,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class FarmerDelayAction: FarmerAction{
-	private int delayTicks=10;
+public class FarmerDelayAction: FarmerAction{
+	public int delayTicks=10;
+
+	public FarmerDelayAction(int delayTicks){
+		this.delayTicks=delayTicks;
+	}
 
 	public override void onStart(){}
 

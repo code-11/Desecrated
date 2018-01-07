@@ -7,7 +7,10 @@ public class Clock : MonoBehaviour {
 	private float lastTickTime;
 	private float numTicks=0;
 	public float tickDuration=100; 
-	private IList<ITickable> events=new List<ITickable>();
+	private List<ITickable> events=new List<ITickable>();
+	private List<ITickable> eventsToAdd=new List<ITickable>();
+
+	public bool debug=false;
 
 	private int TICKS_PER_HOUR=100;
 	private int HOURS_PER_DAY=10;
@@ -42,7 +45,7 @@ public class Clock : MonoBehaviour {
 	}
 
 	public void subscribe(ITickable evt){
-		events.Add(evt);
+		eventsToAdd.Add(evt);
 	}
 	
 	private void callOnTicks(){
@@ -83,10 +86,16 @@ public class Clock : MonoBehaviour {
 
 			callOnTicks();
 
+			if(debug){
+				Debug.Log("Tick ["+events.Count+"]");
+			}
+
 			if (numTicks % TICKS_PER_HOUR==0){
 				//On hour edge trigger
 				callOnHours();
 			} 
+			events.AddRange(eventsToAdd);
+			eventsToAdd.Clear();
 		}
 	}
 }

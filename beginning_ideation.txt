@@ -1,0 +1,21 @@
+-Grass
+-Shrubs
+-Medium Undergrowth
+-Heavy Undergrowth
+-Mud
+-Swamp
+-Trees
+-Rocks
+
+Levels of desecration:
+-Touched
+-Influenced
+-Possessed
+-Turned
+
+Animals
+-Squirell
+	-Live in nests of 3-4
+	-hide nuts in caches which they go to
+	-they chase other squirells
+	-when influenced, you can get them to scout for you.

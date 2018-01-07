@@ -6,7 +6,6 @@ public class PlayerMovement : MonoBehaviour {
 
 	public float speed=100.0f;	
 	public float radius=.2f;
-	public bool debug=false;
 
 	// Update is called once per frame
 	void Update () {

@@ -1,16 +1,17 @@
 import pygame
 import sys
+
 from pygame.locals import *
 
-
-
+import worldmap
 
 def pygame_main_loop():
     pygame.init()
     DISPLAYSURF = pygame.display.set_mode((400, 300))
 
-    herp=Tile()
-    derp=TilePainter(DISPLAYSURF)
+    herp = worldmap.WorldMap()
+    derp = worldmap.Tile()
+    herp.add_tile(derp)
     
     pygame.display.set_caption('Hello World!')
     while True:  # main game loop
@@ -19,26 +20,8 @@ def pygame_main_loop():
                 pygame.quit()
                 sys.exit()
 
-        derp.draw_tile(herp)
+        derp.draw(DISPLAYSURF)
         pygame.display.update()
-
-class Tile(object):
-    terrain_type=None
-    location=(100,100)
-
-    def draw(self, surface):
-        # pygame.draw.rect(surface, pygame.Color(0, 0, 0), pygame.rect.Rect(x, y, w, h))
-        pygame.draw.circle(surface, pygame.Color(0, 0, 200), self.location, 30)
-
-
-class TilePainter(object):
-    surface=None
-
-    def __init__(self,surface):
-        self.surface=surface
-
-    def draw_tile(self,tile):
-        tile.draw(self.surface)
 
 if __name__ == "__main__":
     pygame_main_loop()

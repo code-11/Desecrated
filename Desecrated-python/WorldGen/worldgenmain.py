@@ -13,6 +13,25 @@ def lon():
 def pt():
 	return (lat(),lon())
 
+def to_geodetic(lon,lat):
+	# geodetic= ccrs.Geodetic()
+	# geocentric=ccrs.Geocentric()
+
+	# lat=math.radians(lat)
+	# lon=math.radians(lon)
+
+	# return geodetic.transform_point(lat,lon,geocentric)
+
+	lat=math.radians(lat)
+	lon=math.radians(lon)
+	x = math.cos(lon)* math.cos(lat)
+	y = math.sin(lon)* math.cos(lat)
+	z = math.sin(lat)
+	return (x,y,z)
+
+def intersection(lon1, lat1, lon2, lat2):
+	pass
+
 def haversine(lon1, lat1, lon2, lat2):
     """
     Calculate the great circle distance between two points 
@@ -35,15 +54,29 @@ def haversine(lon1, lat1, lon2, lat2):
 #          transform=ccrs.Geodetic(),
 #          )
 
+
+
 lons = 360 * np.random.rand(2)
 lats = 180 * np.random.rand(2) - 90
 
-fig = plt.figure()
-ax = fig.add_subplot(1, 1, 1,
-                     projection=ccrs.PlateCarree())
-ax.coastlines()
-ax.scatter(lons,lats)
-ax.plot(lons, lats,transform=ccrs.Geodetic())
-ax.set_global()
+lat1=-90.234036
+lon1=37.673442
 
-plt.show()
+lat2=-90.953669
+lon2=36.109997
+
+lat3=48.8567
+lon3=2.3508
+
+
+print(to_geodetic(lat3,lon3))
+
+# fig = plt.figure()
+# ax = fig.add_subplot(1, 1, 1,
+#                      projection=ccrs.PlateCarree())
+# ax.coastlines()
+# ax.scatter(lons,lats)
+# ax.plot(lons, lats,transform=ccrs.Geodetic())
+# ax.set_global()
+
+# plt.show()

@@ -4,6 +4,7 @@ import random
 import math
 import numpy as np
 
+
 def lat():
 	return random.uniform(0,180)
 
@@ -13,21 +14,20 @@ def lon():
 def pt():
 	return (lat(),lon())
 
-def to_geodetic(lon,lat):
-	# geodetic= ccrs.Geodetic()
-	# geocentric=ccrs.Geocentric()
-
-	# lat=math.radians(lat)
-	# lon=math.radians(lon)
-
-	# return geodetic.transform_point(lat,lon,geocentric)
-
+def to_geocentric(lat,lon):
+	a=6371
 	lat=math.radians(lat)
 	lon=math.radians(lon)
-	x = math.cos(lon)* math.cos(lat)
-	y = math.sin(lon)* math.cos(lat)
-	z = math.sin(lat)
+	x = a*math.cos(lon)* math.cos(lat)
+	y = a*math.sin(lon)* math.cos(lat)
+	z = a*math.sin(lat)
 	return (x,y,z)
+
+def to_geodetic(x,y,z):
+	dis=math.sqrt(x**2+y**2+z**2)
+	lon=math.atan2(y,x)
+	lat=math.asin(z/dis)
+	return math.degrees(lat),math.degrees(lon)
 
 def intersection(lon1, lat1, lon2, lat2):
 	pass
@@ -59,17 +59,18 @@ def haversine(lon1, lat1, lon2, lat2):
 lons = 360 * np.random.rand(2)
 lats = 180 * np.random.rand(2) - 90
 
-lat1=-90.234036
-lon1=37.673442
+lat1=87
+lon1=65
 
-lat2=-90.953669
-lon2=36.109997
+lat2=-36
+lon2=145
 
 lat3=48.8567
 lon3=2.3508
 
+print(to_geodetic(*to_geocentric(lat1,lon1)))
 
-print(to_geodetic(lat3,lon3))
+
 
 # fig = plt.figure()
 # ax = fig.add_subplot(1, 1, 1,

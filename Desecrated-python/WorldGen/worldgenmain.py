@@ -4,7 +4,7 @@ import random
 import math
 import numpy as np
 
-RADIUS=6371
+RADIUS=6371 #Radius of earth km
 
 def gen_lat():
 	return random.uniform(0,180)
@@ -14,6 +14,22 @@ def gen_lon():
 
 def pt():
 	return (lat(),lon())
+
+class BoundingCircle(object):
+	lat=0
+	lon=0
+	radius=0
+	def __init__(self,lat,lon,radius):
+		self.lat=lat
+		self.lon=lon
+		self.radius=radius
+
+	def within(lat2,lon2):
+		return within(self.lat,self.lon,self.radius,lat2,lon2)
+
+def within(lat,lon,radius,lat2,lon2):
+	distance=haversine(lat,lon,lat2,lon2)
+	return distance<=radius
 
 def to_geocentric(lat,lon):
 	print(lat,lon)
@@ -41,7 +57,7 @@ def intersection(lon1, lat1, lon2, lat2):
 
 def haversine(lat1, lon1, lat2, lon2):
     """
-    Calculate the great circle distance between two points 
+    Calculate the great circle distance (km) between two points 
     on the earth (specified in decimal degrees)
     """
     # convert decimal degrees to radians 

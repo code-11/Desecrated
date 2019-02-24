@@ -5,16 +5,17 @@ import math
 import numpy as np
 
 
-def lat():
+def gen_lat():
 	return random.uniform(0,180)
 
-def lon():
+def gen_lon():
 	return random.uniform(0,360)
 
 def pt():
 	return (lat(),lon())
 
 def to_geocentric(lat,lon):
+	print(lat,lon)
 	a=6371
 	lat=math.radians(lat)
 	lon=math.radians(lon)
@@ -28,6 +29,11 @@ def to_geodetic(x,y,z):
 	lon=math.atan2(y,x)
 	lat=math.asin(z/dis)
 	return math.degrees(lat),math.degrees(lon)
+
+def antipode(lat,lon):
+	x,y,z=to_geocentric(lat,lon)
+	return to_geodetic(-x,-y,-z)
+
 
 def intersection(lon1, lat1, lon2, lat2):
 	pass
@@ -83,20 +89,14 @@ lon3=2.3508
 
 # print(to_geodetic(*to_geocentric(lat1,lon1)))
 
-fig = plt.figure()
-ax = fig.add_subplot(1, 1, 1,
-                     projection=ccrs.PlateCarree())
-ax.coastlines()
-# ax.scatter(lons,lats)
-# ax.plot(lons, lats,transform=ccrs.Geodetic())
-ax.set_global()
-print(heading(0,0,1,1))
-
-print(heading(1,1,30,30))
-
-print(heading(30,30,1,1))
-
-print(heading(-30,-30,10,10))
+# fig = plt.figure()
+# ax = fig.add_subplot(1, 1, 1,
+#                      projection=ccrs.PlateCarree())
+# ax.coastlines()
+# # ax.scatter(lons,lats)
+# # ax.plot(lons, lats,transform=ccrs.Geodetic())
+# ax.set_global()
+print(antipode(-12.345,67.890))
 
 
 # plt.show()

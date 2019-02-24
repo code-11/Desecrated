@@ -4,6 +4,7 @@ import random
 import math
 import numpy as np
 
+RADIUS=6371
 
 def gen_lat():
 	return random.uniform(0,180)
@@ -16,7 +17,7 @@ def pt():
 
 def to_geocentric(lat,lon):
 	print(lat,lon)
-	a=6371
+	a=RADIUS
 	lat=math.radians(lat)
 	lon=math.radians(lon)
 	x = a*math.cos(lon)* math.cos(lat)
@@ -38,20 +39,20 @@ def antipode(lat,lon):
 def intersection(lon1, lat1, lon2, lat2):
 	pass
 
-def haversine(lon1, lat1, lon2, lat2):
+def haversine(lat1, lon1, lat2, lon2):
     """
     Calculate the great circle distance between two points 
     on the earth (specified in decimal degrees)
     """
     # convert decimal degrees to radians 
-    lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+    lon1, lat1, lon2, lat2 = map(math.radians, [lon1, lat1, lon2, lat2])
 
     # haversine formula 
     dlon = lon2 - lon1 
     dlat = lat2 - lat1 
-    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
-    c = 2 * asin(sqrt(a)) 
-    r = 6371 # Radius of earth in kilometers. Use 3956 for miles
+    a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+    c = 2 * math.asin(math.sqrt(a)) 
+    r = RADIUS # Radius of earth in kilometers. Use 3956 for miles
     return c * r
 
 def heading(lat1,lon1,lat2,lon2):
@@ -61,6 +62,26 @@ def heading(lat1,lon1,lat2,lon2):
 	brng= math.atan2(X,Y)
 	brng=(brng+(math.pi*2))%(math.pi*2)
 	return (2*math.pi)-brng 
+
+def destination(lat,lon,heading,dis):
+	a=RADIUS
+	distRatio = dis / a;
+	distRatioSine = math.sin(distRatio);
+	distRatioCosine = math.cos(distRatio);
+
+	startLatRad = math.radians(lat);
+	startLonRad = math.radians(lon);
+
+	startLatCos = math.cos(startLatRad);
+	startLatSin = math.sin(startLatRad);
+
+	endLatRads = math.asin((startLatSin * distRatioCosine) + (startLatCos * distRatioSine * math.cos(heading)));
+
+	endLonRads = startLonRad + math.atan2(math.sin(heading) * distRatioSine * startLatCos, distRatioCosine - startLatSin * math.sin(endLatRads));
+
+	newLat = math.degrees(endLatRads);
+	newLong = math.degrees(endLonRads);
+	return (newLat,newLong)
 
 def plot_great_circle(lat1,lon1,lat2,lon2):
 	plt.plot([lon1, lon2], [lat1, lat2],
@@ -84,19 +105,20 @@ lon1=65
 lat2=-36
 lon2=145
 
-lat3=48.8567
-lon3=2.3508
+heading=heading(lat1,lon1,lat2,lon2)
+distance=haversine(lat1,lon1,lat2,lon2)
+
+print(destination(lat1,lon1,heading,distance))
 
 # print(to_geodetic(*to_geocentric(lat1,lon1)))
 
-# fig = plt.figure()
-# ax = fig.add_subplot(1, 1, 1,
-#                      projection=ccrs.PlateCarree())
-# ax.coastlines()
-# # ax.scatter(lons,lats)
-# # ax.plot(lons, lats,transform=ccrs.Geodetic())
-# ax.set_global()
-print(antipode(-12.345,67.890))
+fig = plt.figure()
+ax = fig.add_subplot(1, 1, 1,
+                     projection=ccrs.PlateCarree())
+ax.coastlines()
+# ax.scatter(lons,lats)
+ax.plot([lon1,lon2],[lat1,lat2], transform=ccrs.Geodetic())
+ax.set_global()
 
 
-# plt.show()
+plt.show()

@@ -55,15 +55,21 @@ def midpoint(lat1,lon1,lat2,lon2):
 	v1=np.array(to_geocentric(lat1,lon1))
 	v3=np.array(to_geocentric(lat2,lon2))
 	v2=(v1+v3)/2
-	norm_v2=np.linalg.norm(v2)
-	v2_unit=v2/norm_v2
-	v2_final=v2_unit*RADIUS
-	print(v2_final)
-	return to_geodetic(*v2_final)
+	return to_geodetic(*v2)
 
+def norm(v,mag=1):
+	return (v/np.linalg.norm(v))*mag
 
-def intersection(lon1, lat1, lon2, lat2):
-	pass
+def intersection(lon1, lat1, lon2, lat2, lat3, lon3, lat4, lon4):
+	a0=to_geocentric(lat1,lon1)
+	a1=to_geocentric(lat2,lon2)
+	b0=to_geocentric(lat3,lon3)
+	b1=to_geocentric(lat4,lon4)
+	nor1=np.cross(a0,a1)
+	nor2=np.cross(b0,b1)
+	sect1=np.cross(nor1,nor2)
+	sect2=-sect1
+	return (to_geodetic(*sect1),to_geodetic(*sect2))
 
 def haversine(lat1, lon1, lat2, lon2):
     """
@@ -128,14 +134,19 @@ lats = 180 * np.random.rand(2) - 90
 lat1=87
 lon1=65
 
-lat3=-36
-lon3=145
+lat2=-36
+lon2=145
 
-lat2,lon2=midpoint(lat1,lon1,lat3,lon3)
+lat3=-30
+lon3=10
 
-print(lat1,lon1)
-print(lat2,lon2)
-print(lat3,lon3)
+lat4=50
+lon4=130
+
+a,b=intersection(lat1,lon1,lat2,lon2,lat3,lon3,lat4,lon4)
+
+lata,lona=(a[0],a[1])
+latb,lonb=(b[0],b[1])
 
 # print(to_geodetic(*to_geocentric(lat1,lon1)))
 
@@ -143,8 +154,10 @@ fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1,
                      projection=ccrs.PlateCarree())
 ax.coastlines()
-ax.plot([lon1,lon3],[lat1,lat3], transform=ccrs.Geodetic())
-ax.scatter([lon2],[lat2])
+ax.plot([lon1,lon2],[lat1,lat2], transform=ccrs.Geodetic())
+ax.plot([lon3,lon4],[lat3,lat4], transform=ccrs.Geodetic())
+
+ax.scatter([lona,lonb],[lata,latb])
 ax.set_global()
 
 

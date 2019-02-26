@@ -57,8 +57,11 @@ def midpoint(lat1,lon1,lat2,lon2):
 	return to_geodetic(*v2)
 
 def center(lat_lons):
-	vs=map(lambda pt:np.array(to_geocentric(*pt)) , lat_lons)
-	print(vs)
+	vs=map(lambda pt:to_geocentric(*pt) , lat_lons)
+	np_vs=np.array(list(vs))
+	vs_len=np_vs.shape[0]
+	vs_sum=np.sum(np_vs,axis=0)
+	return to_geodetic(*(vs_sum/vs_len))
 
 def norm(v,mag=1):
 	return (v/np.linalg.norm(v))*mag
@@ -158,14 +161,15 @@ lon3=10
 lat4=40
 lon4=150
 
-sect=intersection(lat1,lon1,lat2,lon2,lat3,lon3,lat4,lon4)
+# sect=intersection(lat1,lon1,lat2,lon2,lat3,lon3,lat4,lon4)
 
-lata,lona=(sect[0],sect[1])
+# lata,lona=(sect[0],sect[1])
 
 # print(to_geodetic(*to_geocentric(lat1,lon1)))
 
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1,
+					 # projection=ccrs.Orthographic(30,-85))
                      projection=ccrs.PlateCarree())
 ax.coastlines()
 
@@ -175,10 +179,13 @@ ax.coastlines()
 # ax.plot(flons,flats, transform=ccrs.Geodetic())
 # ax.plot(flons2,flats2, transform=ccrs.Geodetic())
 
-ax.plot([lon1,lon2],[lat1,lat2], transform=ccrs.Geodetic())
-ax.plot([lon3,lon4],[lat3,lat4], transform=ccrs.Geodetic())
+# ax.plot([lon1,lon2],[lat1,lat2], transform=ccrs.Geodetic())
+# ax.plot([lon3,lon4],[lat3,lat4], transform=ccrs.Geodetic())
 
-ax.scatter([lona],[lata])
+lata,lona=center([(lat1,lon1),(lat2,lon2),(lat3,lon3),(lat4,lon4)])
+
+ax.scatter([lona],[lata],color="red")
+ax.scatter([lon1,lon2,lon3,lon4],[lat1,lat2,lat3,lat4])
 ax.set_global()
 
 

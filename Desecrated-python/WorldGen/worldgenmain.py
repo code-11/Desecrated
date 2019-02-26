@@ -42,7 +42,6 @@ def to_geocentric(lat,lon):
 
 def to_geodetic(x,y,z):
 	dis=math.sqrt(x**2+y**2+z**2)
-	print(math.sqrt(x**2+y**2+z**2))
 	lon=math.atan2(y,x)
 	lat=math.asin(z/dis)
 	return math.degrees(lat),math.degrees(lon)
@@ -57,10 +56,14 @@ def midpoint(lat1,lon1,lat2,lon2):
 	v2=(v1+v3)/2
 	return to_geodetic(*v2)
 
+def center(lat_lons):
+	vs=map(lambda pt:np.array(to_geocentric(*pt)) , lat_lons)
+	print(vs)
+
 def norm(v,mag=1):
 	return (v/np.linalg.norm(v))*mag
 
-def intersection(lon1, lat1, lon2, lat2, lat3, lon3, lat4, lon4):
+def intersection(lat1, lon1, lat2, lon2, lat3, lon3, lat4, lon4):
 	a0=to_geocentric(lat1,lon1)
 	a1=to_geocentric(lat2,lon2)
 	b0=to_geocentric(lat3,lon3)
@@ -69,7 +72,21 @@ def intersection(lon1, lat1, lon2, lat2, lat3, lon3, lat4, lon4):
 	nor2=np.cross(b0,b1)
 	sect1=np.cross(nor1,nor2)
 	sect2=-sect1
-	return (to_geodetic(*sect1),to_geodetic(*sect2))
+	geosect_a=to_geodetic(*sect1)
+	geosect_b=to_geodetic(*sect2)
+
+	mid12=midpoint(lat1,lon1,lat2,lon2)
+	mid34=midpoint(lat3,lon3,lat4,lon4)
+	half_dis12=haversine(lat1,lon1,lat2,lon2)/2
+	half_dis34=haversine(lat3,lon3,lat4,lon4)/2
+
+	if (within(*mid12,half_dis12,*geosect_a) and within(*mid34,half_dis34,*geosect_a)):
+		return geosect_a
+	elif (within(*mid12,half_dis12,*geosect_b) and within(*mid34,half_dis34,*geosect_b)):	
+		return geosect_b
+	else:
+		return (None,None)
+
 
 def haversine(lat1, lon1, lat2, lon2):
     """
@@ -115,17 +132,15 @@ def destination(lat,lon,heading,dis):
 	newLong = math.degrees(endLonRads);
 	return (newLat,newLong)
 
-def plot_great_circle(lat1,lon1,lat2,lon2):
-	plt.plot([lon1, lon2], [lat1, lat2],
-         color='blue', linewidth=1, marker='o',
-         transform=ccrs.Geodetic(),
-         )
+def full_circle(lat1,lon1,lat2,lon2):
+	anti_lat,anti_lon=antipode(lat1,lon1)
+	anti_lat2,anti_lon2=antipode(lat2,lon2)
+	return ([lat1,lat2,anti_lat,anti_lat2,lat1],[lon1,lon2,anti_lon,anti_lon2,lon1])
 
-# plt.plot([ny_lon, delhi_lon], [ny_lat, delhi_lat],
-#          color='blue', linewidth=2, marker='o',
-#          transform=ccrs.Geodetic(),
-#          )
-
+	# plt.plot([lon1, lon2], [lat1, lat2],
+ #         color='blue', linewidth=1, marker='o',
+ #         transform=ccrs.Geodetic(),
+ #         )
 
 
 lons = 360 * np.random.rand(2)
@@ -140,13 +155,12 @@ lon2=145
 lat3=-30
 lon3=10
 
-lat4=50
-lon4=130
+lat4=40
+lon4=150
 
-a,b=intersection(lat1,lon1,lat2,lon2,lat3,lon3,lat4,lon4)
+sect=intersection(lat1,lon1,lat2,lon2,lat3,lon3,lat4,lon4)
 
-lata,lona=(a[0],a[1])
-latb,lonb=(b[0],b[1])
+lata,lona=(sect[0],sect[1])
 
 # print(to_geodetic(*to_geocentric(lat1,lon1)))
 
@@ -154,10 +168,17 @@ fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1,
                      projection=ccrs.PlateCarree())
 ax.coastlines()
+
+# flats,flons=full_circle(lat1,lon1,lat2,lon2)
+# flats2,flons2=full_circle(lat3,lon3,lat4,lon4)
+
+# ax.plot(flons,flats, transform=ccrs.Geodetic())
+# ax.plot(flons2,flats2, transform=ccrs.Geodetic())
+
 ax.plot([lon1,lon2],[lat1,lat2], transform=ccrs.Geodetic())
 ax.plot([lon3,lon4],[lat3,lat4], transform=ccrs.Geodetic())
 
-ax.scatter([lona,lonb],[lata,latb])
+ax.scatter([lona],[lata])
 ax.set_global()
 
 

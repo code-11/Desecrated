@@ -146,8 +146,8 @@ def full_circle(lat1,lon1,lat2,lon2):
  #         )
 
 
-lons = 360 * np.random.rand(2)
-lats = 180 * np.random.rand(2) - 90
+lons = 360 * np.random.rand(3)
+lats = 180 * np.random.rand(3) - 90
 
 lat1=87
 lon1=65
@@ -182,10 +182,10 @@ ax.coastlines()
 # ax.plot([lon1,lon2],[lat1,lat2], transform=ccrs.Geodetic())
 # ax.plot([lon3,lon4],[lat3,lat4], transform=ccrs.Geodetic())
 
-lata,lona=center([(lat1,lon1),(lat2,lon2),(lat3,lon3),(lat4,lon4)])
+lata,lona=center(zip(lats,lons))
 
 ax.scatter([lona],[lata],color="red")
-ax.scatter([lon1,lon2,lon3,lon4],[lat1,lat2,lat3,lat4])
+ax.scatter(lons,lats)
 ax.set_global()
 
 

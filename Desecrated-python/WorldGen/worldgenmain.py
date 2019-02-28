@@ -5,6 +5,7 @@ import math
 import numpy as np
 
 RADIUS=6371 #Radius of earth km
+CIRCUM=2*math.pi*RADIUS
 
 def gen_lat():
 	return random.uniform(0,180)
@@ -115,6 +116,18 @@ def heading(lat1,lon1,lat2,lon2):
 	brng=(brng+(math.pi*2))%(math.pi*2)
 	return (2*math.pi)-brng 
 
+"""
+Given a point and a heading, determine the focus of that great circle
+"""
+def focus(lat,lon,heading):
+	lat2,lon2=destination(lat,lon,heading,10)
+
+	v1=to_geocentric(lat,lon)
+	v2=to_geocentric(lat2,lon2)
+	nor=np.cross(v1,v2)
+
+	return to_geodetic(*nor)
+
 def destination(lat,lon,heading,dis):
 	a=RADIUS
 	distRatio = dis / a;
@@ -140,32 +153,59 @@ def full_circle(lat1,lon1,lat2,lon2):
 	anti_lat2,anti_lon2=antipode(lat2,lon2)
 	return ([lat1,lat2,anti_lat,anti_lat2,lat1],[lon1,lon2,anti_lon,anti_lon2,lon1])
 
+def full_circle_hd(lat1,lon1,heading):
+	lat2,lon2=destination(lat1,lon1,heading,10)
+	return full_circle(lat1,lon1,lat2,lon2)
+
 	# plt.plot([lon1, lon2], [lat1, lat2],
  #         color='blue', linewidth=1, marker='o',
  #         transform=ccrs.Geodetic(),
  #         )
 
+n=20
+xs= 200 * np.random.rand(n) - 100
+ys= 200 * np.random.rand(n) - 100
+zs= 200 * np.random.rand(n) - 100
 
-lons = 360 * np.random.rand(3)
-lats = 180 * np.random.rand(3) - 90
+pts=[]
+for (x,y,z) in zip(xs,ys,zs):
+	pts.append(to_geodetic(x,y,z))
 
-lat1=87
-lon1=65
+lats,lons=zip(*pts)
 
-lat2=-36
-lon2=145
+lata,lona=center(zip(lats,lons))
+center=focus(lata,lona,0)
+plot_lats,plot_lons=full_circle_hd(lata,lona,0)
 
-lat3=-30
-lon3=10
+pts_a=[]
+pts_b=[]
 
-lat4=40
-lon4=150
+for pt in pts:
+	if within(*center,CIRCUM/4,*pt):
+		pts_a.append(pt)
+	else:
+		pts_b.append(pt)
 
-# sect=intersection(lat1,lon1,lat2,lon2,lat3,lon3,lat4,lon4)
+lats_a,lons_a=zip(*pts_a)
+lats_b,lons_b=zip(*pts_b)
 
-# lata,lona=(sect[0],sect[1])
+# lat1=80
+# lon1=0
 
-# print(to_geodetic(*to_geocentric(lat1,lon1)))
+# lat2=80
+# lon2=10
+
+# lat3=90
+# lon3=0
+
+# lat4=90
+# lon4=10
+
+# # sect=intersection(lat1,lon1,lat2,lon2,lat3,lon3,lat4,lon4)
+
+# # lata,lona=(sect[0],sect[1])
+
+# # print(to_geodetic(*to_geocentric(lat1,lon1)))
 
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1,
@@ -182,10 +222,13 @@ ax.coastlines()
 # ax.plot([lon1,lon2],[lat1,lat2], transform=ccrs.Geodetic())
 # ax.plot([lon3,lon4],[lat3,lat4], transform=ccrs.Geodetic())
 
-lata,lona=center(zip(lats,lons))
+
+# lata,lona=center(zip([lat1,lat2,lat3,lat4],[lon1,lon2,lon3,lon4]))
 
 ax.scatter([lona],[lata],color="red")
-ax.scatter(lons,lats)
+ax.plot(plot_lons,plot_lats,color="red",transform=ccrs.Geodetic())
+ax.scatter(lons_a,lats_a)
+ax.scatter(lons_b,lats_b,color="green")
 ax.set_global()
 
 

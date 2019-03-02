@@ -157,49 +157,59 @@ def full_circle_hd(lat1,lon1,heading):
 	lat2,lon2=destination(lat1,lon1,heading,10)
 	return full_circle(lat1,lon1,lat2,lon2)
 
-	# plt.plot([lon1, lon2], [lat1, lat2],
- #         color='blue', linewidth=1, marker='o',
- #         transform=ccrs.Geodetic(),
- #         )
+def gen_rnd_pts(n=20):
+	n=20
+	xs= 200 * np.random.rand(n) - 100
+	ys= 200 * np.random.rand(n) - 100
+	zs= 200 * np.random.rand(n) - 100
 
-n=20
-xs= 200 * np.random.rand(n) - 100
-ys= 200 * np.random.rand(n) - 100
-zs= 200 * np.random.rand(n) - 100
+	pts=[]
+	for (x,y,z) in zip(xs,ys,zs):
+		pts.append(to_geodetic(x,y,z))
+	return pts
 
-pts=[]
-for (x,y,z) in zip(xs,ys,zs):
-	pts.append(to_geodetic(x,y,z))
+def gen_rnd_color():
+	
 
-lats,lons=zip(*pts)
+def bin_partition(pts,heading):
+	if len(pts)>3:
+		lats,lons=zip(*pts)
 
-lata,lona=center(zip(lats,lons))
-center=focus(lata,lona,0)
-plot_lats,plot_lons=full_circle_hd(lata,lona,0)
+		lata,lona=center(zip(lats,lons))
+		focus_pt=focus(lata,lona,heading)
 
-pts_a=[]
-pts_b=[]
+		far_pts=[]
+		near_pts=[]
+		for pt in pts:
+			if within(*focus_pt,CIRCUM/4,*pt):
+				near_pts.append(pt)
+			else:
+				far_pts.append(pt)
 
-for pt in pts:
-	if within(*center,CIRCUM/4,*pt):
-		pts_a.append(pt)
+		return (bin_partition(near_pts,heading+math.pi/2),bin_partition(far_pts,heading+math.pi/2),focus_pt)
 	else:
-		pts_b.append(pt)
+		return pts
 
-lats_a,lons_a=zip(*pts_a)
-lats_b,lons_b=zip(*pts_b)
 
-# lat1=80
-# lon1=0
+def print_partition(stuff):
+	try:
+		left,right,focus=stuff
+		print_partition(left)
+		print_partition(right)
+	except:
 
-# lat2=80
-# lon2=10
 
-# lat3=90
-# lon3=0
+def voronoi():
+	pts=gen_rnd_pts()
+	stuff=bin_partition(pts,0)
 
-# lat4=90
-# lon4=10
+	print(stuff)
+	# near_lats,near_lons=zip(*near_pts)
+	# far_lats,far_lons=zip(*far_pts)
+
+	# ax.scatter(near_lons,near_lats)
+	# ax.scatter(far_lons,far_lats,color="green")
+
 
 # # sect=intersection(lat1,lon1,lat2,lon2,lat3,lon3,lat4,lon4)
 
@@ -225,10 +235,11 @@ ax.coastlines()
 
 # lata,lona=center(zip([lat1,lat2,lat3,lat4],[lon1,lon2,lon3,lon4]))
 
-ax.scatter([lona],[lata],color="red")
-ax.plot(plot_lons,plot_lats,color="red",transform=ccrs.Geodetic())
-ax.scatter(lons_a,lats_a)
-ax.scatter(lons_b,lats_b,color="green")
+# ax.scatter([lona],[lata],color="red")
+# ax.plot(plot_lons,plot_lats,color="red",transform=ccrs.Geodetic())
+# ax.scatter(lons_a,lats_a)
+# ax.scatter(lons_b,lats_b,color="green")
+voronoi()
 ax.set_global()
 
 

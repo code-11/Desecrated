@@ -157,8 +157,13 @@ def full_circle_hd(lat1,lon1,heading):
 	lat2,lon2=destination(lat1,lon1,heading,10)
 	return full_circle(lat1,lon1,lat2,lon2)
 
+
+#!!! This is broken
+def full_circle_focus(lat,lon):
+	pt_on_circle=destination(lat,lon,0,CIRCUM/4)
+	return full_circle_hd(*pt_on_circle,math.pi/2)
+
 def gen_rnd_pts(n=20):
-	n=20
 	xs= 200 * np.random.rand(n) - 100
 	ys= 200 * np.random.rand(n) - 100
 	zs= 200 * np.random.rand(n) - 100
@@ -169,7 +174,7 @@ def gen_rnd_pts(n=20):
 	return pts
 
 def gen_rnd_color():
-	
+	return list(np.random.random(size=3))
 
 def bin_partition(pts,heading):
 	if len(pts)>3:
@@ -191,19 +196,23 @@ def bin_partition(pts,heading):
 		return pts
 
 
-def print_partition(stuff):
+def print_partition(ax,stuff):
 	try:
 		left,right,focus=stuff
-		print_partition(left)
-		print_partition(right)
-	except:
+		print_partition(ax,left)
+		print_partition(ax,right)
 
+		part_lats,part_lons=full_circle_focus(*focus)
+		ax.plot(part_lons,part_lats,color="red")
+	except:
+		lats,lons=zip(*stuff)
+		ax.scatter(lons,lats,color=gen_rnd_color())
 
 def voronoi():
-	pts=gen_rnd_pts()
+	pts=gen_rnd_pts(5)
 	stuff=bin_partition(pts,0)
 
-	print(stuff)
+	return stuff
 	# near_lats,near_lons=zip(*near_pts)
 	# far_lats,far_lons=zip(*far_pts)
 
@@ -216,6 +225,7 @@ def voronoi():
 # # lata,lona=(sect[0],sect[1])
 
 # # print(to_geodetic(*to_geocentric(lat1,lon1)))
+
 
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1,
@@ -239,7 +249,8 @@ ax.coastlines()
 # ax.plot(plot_lons,plot_lats,color="red",transform=ccrs.Geodetic())
 # ax.scatter(lons_a,lats_a)
 # ax.scatter(lons_b,lats_b,color="green")
-voronoi()
+stuff=voronoi()
+print_partition(ax,stuff)
 ax.set_global()
 
 

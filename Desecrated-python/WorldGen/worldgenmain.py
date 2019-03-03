@@ -193,7 +193,7 @@ def bin_partition(pts,heading):
 			else:
 				far_pts.append(pt)
 
-		return (bin_partition(near_pts,heading+math.pi/2),bin_partition(far_pts,heading+math.pi/2),focus_pt)
+		return (bin_partition(near_pts,heading+math.pi/2),bin_partition(far_pts,heading+math.pi/2),(lata,lona),heading,focus_pt)
 	else:
 		return voronoi_cluster(pts)
 
@@ -211,7 +211,7 @@ def print_partition(ax,stuff):
 
 def print_clusters(ax,stuff):
 	try:
-		left,right,focus=stuff
+		left,right,center,heading,focus=stuff
 		print_clusters(ax,left)
 		print_clusters(ax,right)
 	except:
@@ -244,9 +244,12 @@ class voronoi_cluster(object):
 
 	def print(self,ax):
 		lats,lons=zip(*self.pts)
-		ax.scatter(lons,lats,color=self.color)
+
 		for edge in self.edges:
-			ax.plot((edge[0][1],edge[1][1]),(edge[0][0],edge[1][0]), color=self.color, transform=ccrs.Geodetic())
+			ax.plot((edge[0][1],edge[1][1]),(edge[0][0],edge[1][0]), linewidth=1, color="black", transform=ccrs.Geodetic())
+
+		ax.scatter(lons,lats,color=self.color)
+
 
 def voronoi():
 	pts=gen_rnd_pts(20)

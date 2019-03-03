@@ -161,7 +161,9 @@ def full_circle_hd(lat1,lon1,heading):
 #!!! This is broken
 def full_circle_focus(lat,lon):
 	pt_on_circle=destination(lat,lon,0,CIRCUM/4)
-	return full_circle_hd(*pt_on_circle,math.pi/2)
+	pt_on_circle2=destination(lat,lon,10,CIRCUM/4)
+
+	return full_circle(*pt_on_circle,*pt_on_circle2)
 
 def gen_rnd_pts(n=20):
 	xs= 200 * np.random.rand(n) - 100
@@ -193,8 +195,7 @@ def bin_partition(pts,heading):
 
 		return (bin_partition(near_pts,heading+math.pi/2),bin_partition(far_pts,heading+math.pi/2),focus_pt)
 	else:
-		return pts
-
+		return voronoi_cluster(pts)
 
 def print_partition(ax,stuff):
 	try:
@@ -203,15 +204,53 @@ def print_partition(ax,stuff):
 		print_partition(ax,right)
 
 		part_lats,part_lons=full_circle_focus(*focus)
-		ax.plot(part_lons,part_lats,color="red")
+		ax.plot(part_lons,part_lats,color="red", transform=ccrs.Geodetic())
 	except:
 		lats,lons=zip(*stuff)
 		ax.scatter(lons,lats,color=gen_rnd_color())
 
-def voronoi():
-	pts=gen_rnd_pts(5)
-	stuff=bin_partition(pts,0)
+def print_clusters(ax,stuff):
+	try:
+		left,right,focus=stuff
+		print_clusters(ax,left)
+		print_clusters(ax,right)
+	except:
+		stuff.print(ax)
 
+class voronoi_cluster(object):
+	edges=[]
+	pts=[]
+	color=None
+	def __init__(self,pts):
+		self.pts=pts
+		self.color=gen_rnd_color()
+		self.initial_merge()
+
+	def __repr__(self):
+		return self.__str__()
+
+	def __str__(self):
+		return "["+str(len(self.pts))+"]"
+
+	def initial_merge(self):
+		pts=self.pts
+		edges=self.edges
+		
+		if len(pts)>1:
+			edges.append((pts[0],pts[1]))
+		if len(pts)>2:
+			edges.append((pts[1],pts[2]))
+			edges.append((pts[0],pts[2]))
+
+	def print(self,ax):
+		lats,lons=zip(*self.pts)
+		ax.scatter(lons,lats,color=self.color)
+		for edge in self.edges:
+			ax.plot((edge[0][1],edge[1][1]),(edge[0][0],edge[1][0]), color=self.color, transform=ccrs.Geodetic())
+
+def voronoi():
+	pts=gen_rnd_pts(20)
+	stuff=bin_partition(pts,0)
 	return stuff
 	# near_lats,near_lons=zip(*near_pts)
 	# far_lats,far_lons=zip(*far_pts)
@@ -250,7 +289,7 @@ ax.coastlines()
 # ax.scatter(lons_a,lats_a)
 # ax.scatter(lons_b,lats_b,color="green")
 stuff=voronoi()
-print_partition(ax,stuff)
+print_clusters(ax,stuff)
 ax.set_global()
 
 

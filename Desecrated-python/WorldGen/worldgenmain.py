@@ -1,5 +1,6 @@
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 import random
 import math
 import numpy as np
@@ -20,13 +21,29 @@ class BoundingCircle(object):
 	lat=0
 	lon=0
 	radius=0
+
+	@classmethod 
+	def three_point(cls,lat1,lon1,lat2,lon2,lat3,lon3):
+		# This is wrong!!!
+		center_pt=center([(lat1,lon1),(lat2,lon2),(lat3,lon3)]) 
+		the_radius=haversine(*center_pt,lat1,lon1)
+		circle=cls(*center_pt,the_radius)
+		print(circle)
+		return circle
+
 	def __init__(self,lat,lon,radius):
 		self.lat=lat
 		self.lon=lon
 		self.radius=radius
 
-	def within(lat2,lon2):
+	def __repr__(self):
+		return "<BC "+str((self.lat,self.lon))+" "+str(self.radius)+" >"
+
+	def within(self,lat2,lon2):
 		return within(self.lat,self.lon,self.radius,lat2,lon2)
+
+	def print(self,ax):
+		ax.add_patch(mpatches.Circle(xy=[self.lon, self.lat], radius=self.radius, color='red', transform=ccrs.PlateCarree(), alpha=0.3, zorder=30))
 
 def within(lat,lon,radius,lat2,lon2):
 	distance=haversine(lat,lon,lat2,lon2)
@@ -99,8 +116,7 @@ def line_distance(lat1,lon1,lat2,lon2,lat,lon):
 	nor1=np.cross(a,b)
 	nor2=np.cross(c,nor1)
 	d=np.cross(nor1,nor2)
-
-	return to_geodetic(*d)
+	return haversine(lat,lon,*to_geodetic(*d))
 
 
 def haversine(lat1, lon1, lat2, lon2):
@@ -168,8 +184,6 @@ def full_circle_hd(lat1,lon1,heading):
 	lat2,lon2=destination(lat1,lon1,heading,10)
 	return full_circle(lat1,lon1,lat2,lon2)
 
-
-#!!! This is broken
 def full_circle_focus(lat,lon):
 	pt_on_circle=destination(lat,lon,0,CIRCUM/4)
 	pt_on_circle2=destination(lat,lon,10,CIRCUM/4)
@@ -209,7 +223,12 @@ def bin_partition(pts,heading):
 		return voronoi_cluster(pts)
 
 def merge(left_cluster, right_cluster, center, heading, focus):
-	pass
+	# centerline
+	center_b=destination(*center,heading,10)
+
+	left_close=left_cluster.closest_to_line(*center,*center_b)
+	right_close=right_cluster.closest_to_line(*center,*center_b)
+	return (left_close,right_close)
 
 def print_partition(ax,stuff):
 	try:
@@ -256,6 +275,13 @@ class voronoi_cluster(object):
 			edges.append((pts[1],pts[2]))
 			edges.append((pts[0],pts[2]))
 
+
+	"""
+	Returns the closest point in this cluster to the given line
+	"""
+	def closest_to_line(self,lat1,lon1,lat2,lon2):
+		return min(self.pts,key=lambda pt: line_distance(lat1,lon1,lat2,lon2,*pt)) 
+
 	def print(self,ax):
 		lats,lons=zip(*self.pts)
 
@@ -266,7 +292,7 @@ class voronoi_cluster(object):
 
 
 def voronoi():
-	pts=gen_rnd_pts(20)
+	pts=gen_rnd_pts(5)
 	stuff=bin_partition(pts,0)
 	return stuff
 	# near_lats,near_lons=zip(*near_pts)
@@ -301,21 +327,56 @@ ax.coastlines()
 
 # lata,lona=center(zip([lat1,lat2,lat3,lat4],[lon1,lon2,lon3,lon4]))
 
-lat1,lon1=(10,20)
-lat2,lon2=(15,35)
-lat3,lon3=(-10,15)
-
-lata,lona=line_distance(lat1,lon1,lat2,lon2,lat3,lon3)
-
-ax.plot([lon1,lon2],[lat1,lat2],color="red")
-ax.scatter([lon3],[lat3])
-ax.scatter([lona],[lata],color="black")
 
 # ax.plot(plot_lons,plot_lats,color="red",transform=ccrs.Geodetic())
 # ax.scatter(lons_a,lats_a)
 # ax.scatter(lons_b,lats_b,color="green")
+
+
+
+
 # stuff=voronoi()
+# a,b=merge(*stuff)
+# lata,lona=a
+# latb,lonb=b
 # print_clusters(ax,stuff)
+
+# flats,flons=full_circle_hd(stuff[2][0],stuff[2][1],stuff[3])
+# ax.plot(flons,flats,color="blue",transform=ccrs.Geodetic())
+
+# ax.scatter([lona,lonb],[lata,latb],color="red",transform=ccrs.Geodetic())
+
+pts=gen_rnd_pts(3000)
+
+pt1=(-15,20)
+pt2=(-30,30)
+pt3=(10,-20)
+
+lat1,lon1=pt1
+lat2,lon2=pt2
+lat3,lon3=pt3
+
+ax.scatter([lon1,lon2,lon3],[lat1,lat2,lat3],color="black",transform=ccrs.Geodetic())
+
+in_pts=[]
+out_pts=[]
+circ=BoundingCircle.three_point(*pt1,*pt2,*pt3)
+for pt in pts:
+	if circ.within(*pt):
+		in_pts.append(pt)
+	else:
+		out_pts.append(pt)
+
+print(in_pts)
+print(out_pts)
+
+in_lats,in_lons=zip(*in_pts)
+out_lats,out_lons=zip(*out_pts)
+ax.scatter(in_lons,in_lats,color="blue",transform=ccrs.Geodetic())
+ax.scatter(out_lons,out_lats,color="red",transform=ccrs.Geodetic())
+
+
+# circ.print(ax)
 ax.set_global()
 
 

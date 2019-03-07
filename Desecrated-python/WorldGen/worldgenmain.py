@@ -91,6 +91,17 @@ def intersection(lat1, lon1, lat2, lon2, lat3, lon3, lat4, lon4):
 	else:
 		return (None,None)
 
+def line_distance(lat1,lon1,lat2,lon2,lat,lon):
+	a=to_geocentric(lat1,lon1)
+	b=to_geocentric(lat2,lon2)
+	c=to_geocentric(lat,lon)
+
+	nor1=np.cross(a,b)
+	nor2=np.cross(c,nor1)
+	d=np.cross(nor1,nor2)
+
+	return to_geodetic(*d)
+
 
 def haversine(lat1, lon1, lat2, lon2):
     """
@@ -197,6 +208,9 @@ def bin_partition(pts,heading):
 	else:
 		return voronoi_cluster(pts)
 
+def merge(left_cluster, right_cluster, center, heading, focus):
+	pass
+
 def print_partition(ax,stuff):
 	try:
 		left,right,focus=stuff
@@ -287,12 +301,21 @@ ax.coastlines()
 
 # lata,lona=center(zip([lat1,lat2,lat3,lat4],[lon1,lon2,lon3,lon4]))
 
-# ax.scatter([lona],[lata],color="red")
+lat1,lon1=(10,20)
+lat2,lon2=(15,35)
+lat3,lon3=(-10,15)
+
+lata,lona=line_distance(lat1,lon1,lat2,lon2,lat3,lon3)
+
+ax.plot([lon1,lon2],[lat1,lat2],color="red")
+ax.scatter([lon3],[lat3])
+ax.scatter([lona],[lata],color="black")
+
 # ax.plot(plot_lons,plot_lats,color="red",transform=ccrs.Geodetic())
 # ax.scatter(lons_a,lats_a)
 # ax.scatter(lons_b,lats_b,color="green")
-stuff=voronoi()
-print_clusters(ax,stuff)
+# stuff=voronoi()
+# print_clusters(ax,stuff)
 ax.set_global()
 
 

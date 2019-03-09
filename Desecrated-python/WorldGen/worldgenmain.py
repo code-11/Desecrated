@@ -21,11 +21,20 @@ class BoundingCircle(object):
 	lat=0
 	lon=0
 	radius=0
+	PRINT_RESOLUTION=100
 
 	@classmethod 
 	def three_point(cls,lat1,lon1,lat2,lon2,lat3,lon3):
-		# This is wrong!!!
-		center_pt=center([(lat1,lon1),(lat2,lon2),(lat3,lon3)]) 
+
+		a=to_geocentric(lat1,lon1)
+		b=to_geocentric(lat2,lon2)
+		c=to_geocentric(lat3,lon3)
+
+		alph=np.subtract(a,b)
+		beta=np.subtract(c,b)
+		phi=np.cross(alph,beta)
+
+		center_pt=to_geodetic(*phi) 
 		the_radius=haversine(*center_pt,lat1,lon1)
 		circle=cls(*center_pt,the_radius)
 		print(circle)
@@ -43,7 +52,16 @@ class BoundingCircle(object):
 		return within(self.lat,self.lon,self.radius,lat2,lon2)
 
 	def print(self,ax):
-		ax.add_patch(mpatches.Circle(xy=[self.lon, self.lat], radius=self.radius, color='red', transform=ccrs.PlateCarree(), alpha=0.3, zorder=30))
+		pts=[]
+		for rad_angle in np.linspace(0,2*math.pi,self.PRINT_RESOLUTION):
+			pts.append(destination(self.lat,self.lon,rad_angle,self.radius))
+
+		lats,lons=zip(*pts)
+		ax.plot(lons,lats,transform=ccrs.Geodetic(),color="black")
+
+		#This should work but I can't get the transform right
+		# ax.add_patch(mpatches.Rectangle(xy=[70, -45], width=90, height=90, facecolor='red', alpha=0.2, transform=ccrs.Geodetic()))
+		# ax.add_patch(mpatches.Circle(xy=[self.lon, self.lat], radius=50, transform=ccrs.Geodetic(), color='red', alpha=0.3, zorder=30))
 
 def within(lat,lon,radius,lat2,lon2):
 	distance=haversine(lat,lon,lat2,lon2)
@@ -155,6 +173,9 @@ def focus(lat,lon,heading):
 
 	return to_geodetic(*nor)
 
+"""
+Given a starting point in lat lon (degrees), and a heading (radians), and a distance (km), find the end point
+"""
 def destination(lat,lon,heading,dis):
 	a=RADIUS
 	distRatio = dis / a;
@@ -349,31 +370,34 @@ ax.coastlines()
 pts=gen_rnd_pts(3000)
 
 pt1=(-15,20)
-pt2=(-30,30)
-pt3=(10,-20)
+pt2=(32,0)
+pt3=(5,5)
 
 lat1,lon1=pt1
 lat2,lon2=pt2
 lat3,lon3=pt3
 
-ax.scatter([lon1,lon2,lon3],[lat1,lat2,lat3],color="black",transform=ccrs.Geodetic())
+ax.scatter([lon1,lon2,lon3],[lat1,lat2,lat3],color="black")
 
 in_pts=[]
 out_pts=[]
 circ=BoundingCircle.three_point(*pt1,*pt2,*pt3)
-for pt in pts:
-	if circ.within(*pt):
-		in_pts.append(pt)
-	else:
-		out_pts.append(pt)
 
-print(in_pts)
-print(out_pts)
+circ.print(ax)
 
-in_lats,in_lons=zip(*in_pts)
-out_lats,out_lons=zip(*out_pts)
-ax.scatter(in_lons,in_lats,color="blue",transform=ccrs.Geodetic())
-ax.scatter(out_lons,out_lats,color="red",transform=ccrs.Geodetic())
+# for pt in pts:
+# 	if circ.within(*pt):
+# 		in_pts.append(pt)
+# 	else:
+# 		out_pts.append(pt)
+
+# print(in_pts)
+# print(out_pts)
+
+# in_lats,in_lons=zip(*in_pts)
+# out_lats,out_lons=zip(*out_pts)
+# ax.scatter(in_lons,in_lats,color="blue",transform=ccrs.Geodetic())
+# ax.scatter(out_lons,out_lats,color="red",transform=ccrs.Geodetic())
 
 
 # circ.print(ax)

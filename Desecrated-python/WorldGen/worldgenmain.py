@@ -367,7 +367,7 @@ ax.coastlines()
 
 # ax.scatter([lona,lonb],[lata,latb],color="red",transform=ccrs.Geodetic())
 
-pts=gen_rnd_pts(3000)
+pts=gen_rnd_pts(5)
 
 pt1=(-15,20)
 pt2=(32,0)
@@ -384,21 +384,6 @@ out_pts=[]
 circ=BoundingCircle.three_point(*pt1,*pt2,*pt3)
 
 circ.print(ax)
-
-# for pt in pts:
-# 	if circ.within(*pt):
-# 		in_pts.append(pt)
-# 	else:
-# 		out_pts.append(pt)
-
-# print(in_pts)
-# print(out_pts)
-
-# in_lats,in_lons=zip(*in_pts)
-# out_lats,out_lons=zip(*out_pts)
-# ax.scatter(in_lons,in_lats,color="blue",transform=ccrs.Geodetic())
-# ax.scatter(out_lons,out_lats,color="red",transform=ccrs.Geodetic())
-
 
 # circ.print(ax)
 ax.set_global()

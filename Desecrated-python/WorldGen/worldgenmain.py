@@ -138,20 +138,20 @@ def line_distance(lat1,lon1,lat2,lon2,lat,lon):
 
 
 def haversine(lat1, lon1, lat2, lon2):
-    """
-    Calculate the great circle distance (km) between two points 
-    on the earth (specified in decimal degrees)
-    """
+	"""
+	Calculate the great circle distance (km) between two points 
+	on the earth (specified in decimal degrees)
+	"""
     # convert decimal degrees to radians 
-    lon1, lat1, lon2, lat2 = map(math.radians, [lon1, lat1, lon2, lat2])
+	lon1, lat1, lon2, lat2 = map(math.radians, [lon1, lat1, lon2, lat2])
 
-    # haversine formula 
-    dlon = lon2 - lon1 
-    dlat = lat2 - lat1 
-    a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
-    c = 2 * math.asin(math.sqrt(a)) 
-    r = RADIUS # Radius of earth in kilometers. Use 3956 for miles
-    return c * r
+	# haversine formula 
+	dlon = lon2 - lon1 
+	dlat = lat2 - lat1 
+	a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+	c = 2 * math.asin(math.sqrt(a)) 
+	r = RADIUS # Radius of earth in kilometers. Use 3956 for miles
+	return c * r
 
 def heading(lat1,lon1,lat2,lon2):
 	lon1, lat1, lon2, lat2 = map(math.radians, [lon1, lat1, lon2, lat2])
@@ -160,6 +160,22 @@ def heading(lat1,lon1,lat2,lon2):
 	brng= math.atan2(X,Y)
 	brng=(brng+(math.pi*2))%(math.pi*2)
 	return (2*math.pi)-brng 
+
+"""
+Subtract two headings, intended to be between 0 and 2*pi
+"""
+def angle_diff(hd1,hd2):
+	pi=math.pi
+	two_pi=pi*2
+	d = abs(hd1 - hd2) % (two_pi); 
+	# r = d > pi ? two_pi - d : d;
+	r = two_pi - d if d>pi else d 
+
+	#calculate sign 
+	sign=1 if (hd1-hd2 >= 0 and hd1-hd2 <= pi) or (hd1-hd2 <=-pi and hd1-hd2>= -two_pi) else -1
+	r *= sign;
+	return r
+
 
 """
 Given a point and a heading, determine the focus of that great circle
@@ -243,13 +259,31 @@ def bin_partition(pts,heading):
 	else:
 		return voronoi_cluster(pts)
 
+def merge_candidate(cluster, near, far):
+	near_lat,near_lon= near
+	far_lat,far_lon=far
+	baseline_heading=heading(near_lat,near_lon,far_lat,far_lon)
+
+	def angle_from_baseline(lat,lon):
+		potential_heading=heading(near_lat,near_lon,lat,lon)
+		return angle_diff(baseline_heading,potential_heading)
+	
+	angles=[]
+	for pt in cluster.pts:
+		angles.append(angle_from_baseline(*pt))
+
+	return angles
+
 def merge(left_cluster, right_cluster, center, heading, focus):
 	# centerline
 	center_b=destination(*center,heading,10)
 
 	left_close=left_cluster.closest_to_line(*center,*center_b)
 	right_close=right_cluster.closest_to_line(*center,*center_b)
-	return (left_close,right_close)
+
+	angles=merge_candidate(right_cluster,right_close,left_close)
+
+	return (left_close,right_close,right_cluster,angles)
 
 def print_partition(ax,stuff):
 	try:
@@ -356,34 +390,77 @@ ax.coastlines()
 
 
 
-# stuff=voronoi()
-# a,b=merge(*stuff)
-# lata,lona=a
-# latb,lonb=b
-# print_clusters(ax,stuff)
+stuff=voronoi()
+# circ_pts=full_circle_hd(stuff[2][0],stuff[2][1],stuff[3])
+# circ_lats,circ_lons=circ_pts	
+# for lpt in stuff[0].pts:
+# 	for rpt in stuff[1].pts:
+# 		sect_lat1,sect_lon1=intersection(circ_lats[0],circ_lons[0],circ_lats[1],circ_lons[1],*lpt,*rpt)
+# 		sect_lat2,sect_lon2=intersection(circ_lats[1],circ_lons[1],circ_lats[2],circ_lons[2],*lpt,*rpt)
+# 		sect_lat3,sect_lon3=intersection(circ_lats[2],circ_lons[2],circ_lats[3],circ_lons[3],*lpt,*rpt)
+# 		sect_lat4,sect_lon4=intersection(circ_lats[3],circ_lons[3],circ_lats[0],circ_lons[0],*lpt,*rpt)
+# 		print(sect_lat1,sect_lat2,sect_lat3,sect_lat4)
+# 		if sect_lat1!=None:
+# 			sect_lat=sect_lat1
+# 			sect_lon=sect_lon1
+# 		if sect_lat2!=None:
+# 			sect_lat=sect_lat2
+# 			sect_lon=sect_lon2
+# 		if sect_lat3!=None:
+# 			sect_lat=sect_lat3
+# 			sect_lon=sect_lon3
+# 		if sect_lat4!=None:
+# 			sect_lat=sect_lat4
+# 			sect_lon=sect_lon4
 
-# flats,flons=full_circle_hd(stuff[2][0],stuff[2][1],stuff[3])
-# ax.plot(flons,flats,color="blue",transform=ccrs.Geodetic())
+# 		r_dis=haversine(*rpt,sect_lat,sect_lon)
+# 		l_dis=haversine(*lpt,sect_lat,sect_lon)
+# 		plt.text(*rpt, str(round(r_dis,3)),
+# 	         horizontalalignment='right',
+# 	         transform=ccrs.Geodetic())
+# 		plt.text(*lpt, str(round(l_dis,3)),
+# 	         horizontalalignment='right',
+# 	         transform=ccrs.Geodetic())	         
+# 		ax.scatter([sect_lon],[sect_lat],color="black",transform=ccrs.Geodetic())
+# 		ax.plot([lpt[1],rpt[1]],[lpt[0],rpt[0]],color="red",transform=ccrs.Geodetic())
+# ax.plot(circ_lons,circ_lats,color="blue",transform=ccrs.Geodetic())
 
-# ax.scatter([lona,lonb],[lata,latb],color="red",transform=ccrs.Geodetic())
 
-pts=gen_rnd_pts(5)
 
-pt1=(-15,20)
-pt2=(32,0)
-pt3=(5,5)
+a,b,right_cluster,angles=merge(*stuff)
+lata,lona=a
+latb,lonb=b
+print_clusters(ax,stuff)
 
-lat1,lon1=pt1
-lat2,lon2=pt2
-lat3,lon3=pt3
+flats,flons=full_circle_hd(stuff[2][0],stuff[2][1],stuff[3])
+ax.plot(flons,flats,color="blue",transform=ccrs.Geodetic())
+ax.plot([lona,lonb],[lata,latb],color="red",transform=ccrs.Geodetic())
+for i in range(len(right_cluster.pts)):
+	pt=right_cluster.pts[i]
+	angle=angles[i]
+	plt.text(pt[1], pt[0], str(round(angle,3)),
+         horizontalalignment='right',
+         transform=ccrs.Geodetic())
 
-ax.scatter([lon1,lon2,lon3],[lat1,lat2,lat3],color="black")
+ax.scatter([lona,lonb],[lata,latb],color="red",transform=ccrs.Geodetic())
 
-in_pts=[]
-out_pts=[]
-circ=BoundingCircle.three_point(*pt1,*pt2,*pt3)
+# pts=gen_rnd_pts(5)
 
-circ.print(ax)
+# pt1=(-15,20)
+# pt2=(32,0)
+# pt3=(5,5)
+
+# lat1,lon1=pt1
+# lat2,lon2=pt2
+# lat3,lon3=pt3
+
+# ax.scatter([lon1,lon2,lon3],[lat1,lat2,lat3],color="black")
+
+# in_pts=[]
+# out_pts=[]
+# circ=BoundingCircle.three_point(*pt1,*pt2,*pt3)
+
+# circ.print(ax)
 
 # circ.print(ax)
 ax.set_global()

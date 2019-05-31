@@ -329,13 +329,13 @@ def merge(left_cluster, right_cluster, center, heading, focus):
     # centerline
     center_b = destination(*center, heading, 10)
 
-    left_close = left_cluster.closest_to_line(*center, *center_b)
-    right_close = right_cluster.closest_to_line(*center, *center_b)
+    left_choose= left_cluster.lowest()
+    right_choose= right_cluster.lowest()
 
-    angles = merge_candidate(right_cluster, right_close, left_close)
-    filter_candidates(right_cluster, angles, right_close, left_close)
+    angles = merge_candidate(right_cluster, right_choose, left_choose)
+    filter_candidates(right_cluster, angles, right_choose, left_choose)
 
-    return (left_close, right_close, right_cluster, angles)
+    return (left_choose, right_choose, right_cluster, angles)
 
 
 def print_partition(ax, stuff):
@@ -392,6 +392,9 @@ class voronoi_cluster(object):
 
     def closest_to_line(self, lat1, lon1, lat2, lon2):
         return min(self.pts, key=lambda pt: line_distance(lat1, lon1, lat2, lon2, *pt))
+
+    def lowest(self):
+        return min(self.pts, key=lambda pt: pt[0])
 
     def print(self, ax):
         lats, lons = zip(*self.pts)

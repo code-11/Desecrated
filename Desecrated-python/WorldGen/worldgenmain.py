@@ -16,11 +16,6 @@ def gen_lat():
 def gen_lon():
     return random.uniform(0, 360)
 
-
-def pt():
-    return (lat(), lon())
-
-
 class BoundingCircle(object):
     lat = 0
     lon = 0
@@ -40,7 +35,6 @@ class BoundingCircle(object):
         center_pt = to_geodetic(*phi)
         the_radius = haversine(*center_pt, lat1, lon1)
         circle = cls(*center_pt, the_radius)
-        print(circle)
         return circle
 
     def __init__(self, lat, lon, radius):
@@ -179,23 +173,15 @@ def heading(lat1, lon1, lat2, lon2):
     brng = (brng + (math.pi * 2)) % (math.pi * 2)
     return (2 * math.pi) - brng
 
-
 """
-Subtract two headings, intended to be between 0 and 2*pi
+How much angle a will have to spin clockwise to get to b
 """
 
 
-def angle_diff(hd1, hd2):
-    pi = math.pi
-    two_pi = pi * 2
-    d = abs(hd1 - hd2) % (two_pi);
-    # r = d > pi ? two_pi - d : d;
-    r = two_pi - d if d > pi else d
-
-    # calculate sign
-    sign = 1 if (hd1 - hd2 >= 0 and hd1 - hd2 <= pi) or (hd1 - hd2 <= -pi and hd1 - hd2 >= -two_pi) else -1
-    r *= sign;
-    return r
+def angle_dist(a,b):
+    if b < a:
+        b += math.pi * 2
+    return b-a
 
 
 """
@@ -303,7 +289,7 @@ def merge_candidate(cluster, near, far):
     def angle_from_baseline(lat, lon):
         potential_heading = heading(near_lat, near_lon, lat, lon)
         print("candidate heading: "+str(potential_heading))
-        return angle_diff(baseline_heading, potential_heading)
+        return angle_dist(baseline_heading, potential_heading)
 
     print("near: "+str(near))
     print("far: "+str(far))
@@ -320,9 +306,31 @@ def merge_candidate(cluster, near, far):
 
 
 def filter_candidates(cluster,angles,baseline_near,baseline_far):
+    filtered=[]
 
-    for angle in angles:
-        print(angle)
+    for i,angle_pair in enumerate(angles):
+        pt,angle=angle_pair
+        angle_met=False
+        circle_met=False
+
+        if angle <= math.pi:
+            angle_met=True
+
+        if i+1<len(angles):
+            next_point,next_angle=angles[i+1]
+            bc=BoundingCircle.three_point(*baseline_near,*baseline_far,*pt)
+            #Circle made by baseline and candidate may not contain next candidate
+            circle_met=bc.within(*next_angle)
+
+        else:
+            circle_met=True
+
+        if angle_met and circle_met:
+            filtered.append(pt)
+
+
+
+
 
 
 def merge(left_cluster, right_cluster, center, heading, focus):
@@ -502,6 +510,13 @@ for angle_pair in angles:
              transform=ccrs.Geodetic())
 
 ax.scatter([lona, lonb], [lata, latb], color="red", transform=ccrs.Geodetic())
+
+# heading_pts = []
+# for heading in np.linspace(0, 2*math.pi, 16):
+#     heading_pt = destination(latb, lonb, heading, 30)
+#     ax.plot([lonb, heading_pt[1]], [latb, heading_pt[0]], color="blue", transform=ccrs.Geodetic())
+#     ax.text(heading_pt[1], heading_pt[0], str(round(heading, 3)))
+
 
 # pts=gen_rnd_pts(5)
 

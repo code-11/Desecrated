@@ -348,13 +348,40 @@ def merge(left_cluster, right_cluster, center, heading, focus):
     left_base = left_cluster.lowest()
     right_base = right_cluster.lowest()
 
-    left_angles = calc_baseline_angles(left_cluster, left_base, right_base, False)
-    left_candidate=find_candidate(left_cluster, left_angles, left_base, right_base)
+    edges_to_add = [(left_base, right_base)]
 
-    right_angles = calc_baseline_angles(right_cluster, right_base, left_base, True)
-    right_candidate=find_candidate(right_cluster, right_angles, right_base, left_base)
-    print(left_candidate,right_candidate)
-    return (left_base, right_base, right_cluster, left_angles+right_angles)
+    for i in range(1):
+        left_angles = calc_baseline_angles(left_cluster, left_base, right_base, False)
+        left_candidate = find_candidate(left_cluster, left_angles, left_base, right_base)
+
+        right_angles = calc_baseline_angles(right_cluster, right_base, left_base, True)
+        right_candidate = find_candidate(right_cluster, right_angles, right_base, left_base)
+
+        if left_candidate is None and right_candidate is None:
+            break
+        elif left_candidate is None:
+            edges_to_add.append((left_base, right_candidate))
+        elif right_candidate is None:
+            edges_to_add.append((left_candidate, right_base))
+        else:
+            # We have both candidates. Now we need to make sure that the three point circle of
+            # baseline_left, baseline_right candidate does not include the other candidate.
+            left_bc = BoundingCircle.three_point(*left_base, *right_base, *left_candidate)
+            right_bc = BoundingCircle.three_point(*left_base, *right_base, *right_candidate)
+            right_contained = left_bc.within(*right_candidate)
+            left_contained = right_bc.within(*left_candidate)
+            if right_contained and left_contained:
+                print("What? 4 cocircular points? Don't know what to do here")
+            elif right_contained:
+                edges_to_add.append((left_base, right_candidate))
+            elif left_contained:
+                edges_to_add.append((left_candidate, right_base))
+            else:
+                print("No contains after double candidate nomination. This is impossible")
+
+        left_base, right_base = edges_to_add[-1]
+
+    return edges_to_add
 
 
 def print_partition(ax, stuff):
@@ -537,22 +564,14 @@ stuff = voronoi()
 # circ.print(ax)
 # print(circ.within(20,20))
 
-a, b, right_cluster, angles = merge(*stuff)
-lata, lona = a
-latb, lonb = b
+edges_to_add = merge(*stuff)
 print_clusters(ax, stuff)
 
 flats, flons = full_circle_hd(stuff[2][0], stuff[2][1], stuff[3])
 ax.plot(flons, flats, color="blue", transform=ccrs.Geodetic())
-ax.plot([lona, lonb], [lata, latb], color="red", transform=ccrs.Geodetic())
-for angle_pair in angles:
-    pt = angle_pair[0]
-    angle = angle_pair[1]
-    plt.text(pt[1], pt[0], str(round(angle, 3)),
-             horizontalalignment='right',
-             transform=ccrs.Geodetic())
-
-ax.scatter([lona, lonb], [lata, latb], color="red", transform=ccrs.Geodetic())
+for edge in edges_to_add:
+    left, right = edge
+    ax.plot([left[1], right[1]], [left[0], right[1]], color="red", transform=ccrs.Geodetic())
 
 # heading_pts = []
 # for heading in np.linspace(0, 2*math.pi, 16):
@@ -563,21 +582,21 @@ ax.scatter([lona, lonb], [lata, latb], color="red", transform=ccrs.Geodetic())
 
 # pts=gen_rnd_pts(5)
 
-pt1=(-15,20)
-pt2=(32,0)
-pt3=(5,5)
-
-lat1,lon1=pt1
-lat2,lon2=pt2
-lat3,lon3=pt3
-
-ax.scatter([lon1,lon2,lon3],[lat1,lat2,lat3],color="black")
-
-in_pts=[]
-out_pts=[]
-circ=BoundingCircle.three_point(*pt1,*pt2,*pt3)
-
-circ.print(ax)
+# pt1=(-15,20)
+# pt2=(32,0)
+# pt3=(5,5)
+#
+# lat1,lon1=pt1
+# lat2,lon2=pt2
+# lat3,lon3=pt3
+#
+# ax.scatter([lon1,lon2,lon3],[lat1,lat2,lat3],color="black")
+#
+# in_pts=[]
+# out_pts=[]
+# circ=BoundingCircle.three_point(*pt1,*pt2,*pt3)
+#
+# circ.print(ax)
 
 ax.set_global()
 

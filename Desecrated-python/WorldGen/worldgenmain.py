@@ -34,6 +34,12 @@ class BoundingCircle(object):
 
         center_pt = to_geodetic(*phi)
         the_radius = haversine(*center_pt, lat1, lon1)
+
+        # Order of points given can sometimes give the inside out bounding circle!
+        if the_radius > CIRCUM/4.0:
+            center_pt=antipode(*center_pt)
+            the_radius=haversine(*center_pt, lat1, lon1)
+
         circle = cls(*center_pt, the_radius)
         return circle
 
@@ -281,69 +287,74 @@ def bin_partition(pts, heading):
         return voronoi_cluster(pts)
 
 
-def merge_candidate(cluster, near, far):
+def calc_baseline_angles(cluster, near, far, is_right):
     near_lat, near_lon = near
     far_lat, far_lon = far
     baseline_heading = heading(near_lat, near_lon, far_lat, far_lon)
 
     def angle_from_baseline(lat, lon):
         potential_heading = heading(near_lat, near_lon, lat, lon)
-        print("candidate heading: "+str(potential_heading))
-        return angle_dist(baseline_heading, potential_heading)
-
-    print("near: "+str(near))
-    print("far: "+str(far))
-    print("heading: "+str(baseline_heading))
+        # print("candidate heading: "+str(potential_heading))
+        if is_right:
+            return angle_dist(baseline_heading, potential_heading)
+        else:
+            return angle_dist(potential_heading,baseline_heading)
+    #
+    # print("near: "+str(near))
+    # print("far: "+str(far))
+    # print("heading: "+str(baseline_heading))
 
     angles = []
     for pt in cluster.pts:
         if pt != near:
             angle=angle_from_baseline(*pt)
-            print("candidate: "+str(pt))
+            # print("candidate: "+str(pt))
             angles.append((pt, angle))
     angles.sort(key=lambda ang_pair: ang_pair[1])
     return angles
 
 
-def filter_candidates(cluster,angles,baseline_near,baseline_far):
-    filtered=[]
-
-    for i,angle_pair in enumerate(angles):
-        pt,angle=angle_pair
-        angle_met=False
-        circle_met=False
+def find_candidate(cluster, angles, baseline_near, baseline_far):
+    filtered = []
+    for i, angle_pair in enumerate(angles):
+        pt, angle = angle_pair
+        angle_met = False
+        circle_met = False
 
         if angle <= math.pi:
-            angle_met=True
+            angle_met = True
 
-        if i+1<len(angles):
-            next_point,next_angle=angles[i+1]
-            bc=BoundingCircle.three_point(*baseline_near,*baseline_far,*pt)
-            #Circle made by baseline and candidate may not contain next candidate
-            circle_met=bc.within(*next_angle)
+        if i+1 < len(angles):
+            next_point, next_angle = angles[i+1]
+            bc = BoundingCircle.three_point(*baseline_near, *baseline_far, *pt)
+            # Circle made by baseline and candidate may not contain next candidate
+            circle_met = not bc.within(*next_point)
 
         else:
-            circle_met=True
+            circle_met = True
 
-        if angle_met and circle_met:
-            filtered.append(pt)
-
-
-
-
+        if angle_met:
+            if circle_met:
+                return pt
+            else:
+                cluster.remove_edge(*baseline_near, *pt)
+    return None
 
 
 def merge(left_cluster, right_cluster, center, heading, focus):
     # centerline
     center_b = destination(*center, heading, 10)
 
-    left_choose= left_cluster.lowest()
-    right_choose= right_cluster.lowest()
+    left_base = left_cluster.lowest()
+    right_base = right_cluster.lowest()
 
-    angles = merge_candidate(right_cluster, right_choose, left_choose)
-    filter_candidates(right_cluster, angles, right_choose, left_choose)
+    left_angles = calc_baseline_angles(left_cluster, left_base, right_base, False)
+    left_candidate=find_candidate(left_cluster, left_angles, left_base, right_base)
 
-    return (left_choose, right_choose, right_cluster, angles)
+    right_angles = calc_baseline_angles(right_cluster, right_base, left_base, True)
+    right_candidate=find_candidate(right_cluster, right_angles, right_base, left_base)
+    print(left_candidate,right_candidate)
+    return (left_base, right_base, right_cluster, left_angles+right_angles)
 
 
 def print_partition(ax, stuff):
@@ -373,7 +384,8 @@ class voronoi_cluster(object):
     pts = []
     color = None
 
-    def __init__(self, pts):
+    def __init__(self, pts, edges = []):
+        self.edges = edges
         self.pts = pts
         self.color = gen_rnd_color()
         self.initial_merge()
@@ -383,6 +395,16 @@ class voronoi_cluster(object):
 
     def __str__(self):
         return "[" + str(len(self.pts)) + "]"
+
+    def remove_edge(self, lat1, lon1, lat2, lon2):
+        pt1 = (lat1, lon1)
+        pt2 = (lat2, lon2)
+        tup1 = (pt1, pt2)
+        tup2 = (pt2, pt1)
+        if tup1 in self.edges:
+            self.edges.remove(tup1)
+        if tup2 in self.edges:
+            self.edges.remove(tup2)
 
     def initial_merge(self):
         pts = self.pts
@@ -415,9 +437,27 @@ class voronoi_cluster(object):
 
 
 def voronoi():
-    pts = gen_rnd_pts(5)
-    stuff = bin_partition(pts, 0)
-    return stuff
+    # pts = gen_rnd_pts(5)
+    # stuff = bin_partition(pts, 0)
+# return stuff
+    a=(1,-3)
+    b=(0,-2)
+    c=(2,-2)
+    d=(3,-2)
+    e=(1,-1)
+    f=(3,1)
+    g=(3,3)
+    h=(2,2)
+    i=(1,3)
+    j=(0,3)
+    pts1=[a,b,c,d,e]
+    pts2=[f,h,g,i,j]
+    edges1=[(a,b),(b,e),(a,c),(c,e),(b,c),(a,d),(c,d),(e,d)]
+    edges2=[(f,g),(f,h),(f,j),(h,g),(h,i),(h,j),(g,i),(i,j)]
+    left=voronoi_cluster(pts1,edges1)
+    right=voronoi_cluster(pts2,edges2)
+
+    return (left,right,(0,0),0,(0,180))
 
 
 # near_lats,near_lons=zip(*near_pts)
@@ -493,6 +533,9 @@ stuff = voronoi()
 # 		ax.plot([lpt[1],rpt[1]],[lpt[0],rpt[0]],color="red",transform=ccrs.Geodetic())
 # ax.plot(circ_lons,circ_lats,color="blue",transform=ccrs.Geodetic())
 
+# circ=BoundingCircle(1.5,-179.99999999,19690.957)
+# circ.print(ax)
+# print(circ.within(20,20))
 
 a, b, right_cluster, angles = merge(*stuff)
 lata, lona = a
@@ -520,23 +563,22 @@ ax.scatter([lona, lonb], [lata, latb], color="red", transform=ccrs.Geodetic())
 
 # pts=gen_rnd_pts(5)
 
-# pt1=(-15,20)
-# pt2=(32,0)
-# pt3=(5,5)
+pt1=(-15,20)
+pt2=(32,0)
+pt3=(5,5)
 
-# lat1,lon1=pt1
-# lat2,lon2=pt2
-# lat3,lon3=pt3
+lat1,lon1=pt1
+lat2,lon2=pt2
+lat3,lon3=pt3
 
-# ax.scatter([lon1,lon2,lon3],[lat1,lat2,lat3],color="black")
+ax.scatter([lon1,lon2,lon3],[lat1,lat2,lat3],color="black")
 
-# in_pts=[]
-# out_pts=[]
-# circ=BoundingCircle.three_point(*pt1,*pt2,*pt3)
+in_pts=[]
+out_pts=[]
+circ=BoundingCircle.three_point(*pt1,*pt2,*pt3)
 
-# circ.print(ax)
+circ.print(ax)
 
-# circ.print(ax)
 ax.set_global()
 
 plt.show()

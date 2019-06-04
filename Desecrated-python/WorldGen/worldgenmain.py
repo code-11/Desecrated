@@ -298,7 +298,7 @@ def calc_baseline_angles(cluster, near, far, is_right):
         if is_right:
             return angle_dist(baseline_heading, potential_heading)
         else:
-            return angle_dist(potential_heading,baseline_heading)
+            return angle_dist(potential_heading, baseline_heading)
     #
     # print("near: "+str(near))
     # print("far: "+str(far))
@@ -307,7 +307,7 @@ def calc_baseline_angles(cluster, near, far, is_right):
     angles = []
     for pt in cluster.pts:
         if pt != near:
-            angle=angle_from_baseline(*pt)
+            angle = angle_from_baseline(*pt)
             # print("candidate: "+str(pt))
             angles.append((pt, angle))
     angles.sort(key=lambda ang_pair: ang_pair[1])
@@ -321,7 +321,7 @@ def find_candidate(cluster, angles, baseline_near, baseline_far):
         angle_met = False
         circle_met = False
 
-        if angle <= math.pi:
+        if angle < math.pi:
             angle_met = True
 
         if i+1 < len(angles):
@@ -350,12 +350,18 @@ def merge(left_cluster, right_cluster, center, heading, focus):
 
     edges_to_add = [(left_base, right_base)]
 
-    for i in range(1):
+    while True:
         left_angles = calc_baseline_angles(left_cluster, left_base, right_base, False)
         left_candidate = find_candidate(left_cluster, left_angles, left_base, right_base)
 
         right_angles = calc_baseline_angles(right_cluster, right_base, left_base, True)
         right_candidate = find_candidate(right_cluster, right_angles, right_base, left_base)
+
+        # Due to shitty numerical precision I need to throw some stuff out
+        if (left_candidate is not None) and left_candidate[0] == left_base[0]:
+            left_candidate = None
+        if (right_candidate is not None) and right_candidate[0] == right_base[0]:
+            right_candidate = None
 
         if left_candidate is None and right_candidate is None:
             break
@@ -380,7 +386,8 @@ def merge(left_cluster, right_cluster, center, heading, focus):
                 print("No contains after double candidate nomination. This is impossible")
 
         left_base, right_base = edges_to_add[-1]
-
+        if left_base==(2,-2) and right_base==(3,1):
+            herp=None
     return edges_to_add
 
 
@@ -464,27 +471,27 @@ class voronoi_cluster(object):
 
 
 def voronoi():
-    # pts = gen_rnd_pts(5)
-    # stuff = bin_partition(pts, 0)
-# return stuff
-    a=(1,-3)
-    b=(0,-2)
-    c=(2,-2)
-    d=(3,-2)
-    e=(1,-1)
-    f=(3,1)
-    g=(3,3)
-    h=(2,2)
-    i=(1,3)
-    j=(0,3)
-    pts1=[a,b,c,d,e]
-    pts2=[f,h,g,i,j]
-    edges1=[(a,b),(b,e),(a,c),(c,e),(b,c),(a,d),(c,d),(e,d)]
-    edges2=[(f,g),(f,h),(f,j),(h,g),(h,i),(h,j),(g,i),(i,j)]
-    left=voronoi_cluster(pts1,edges1)
-    right=voronoi_cluster(pts2,edges2)
-
-    return (left,right,(0,0),0,(0,180))
+    pts = gen_rnd_pts(5)
+    stuff = bin_partition(pts, 0)
+    return stuff
+#     a=(1,-3)
+#     b=(0,-2)
+#     c=(2,-2)
+#     d=(3,-2)
+#     e=(1,-1)
+#     f=(3,1)
+#     g=(3,3)
+#     h=(2,2)
+#     i=(1,3)
+#     j=(0,3)
+#     pts1=[a,b,c,d,e]
+#     pts2=[f,h,g,i,j]
+#     edges1=[(a,b),(b,e),(a,c),(c,e),(b,c),(a,d),(c,d),(e,d)]
+#     edges2=[(f,g),(f,h),(f,j),(h,g),(h,i),(h,j),(g,i),(i,j)]
+#     left=voronoi_cluster(pts1,edges1)
+#     right=voronoi_cluster(pts2,edges2)
+#
+#     return (left,right,(0,0),0,(0,180))
 
 
 # near_lats,near_lons=zip(*near_pts)
@@ -571,7 +578,7 @@ flats, flons = full_circle_hd(stuff[2][0], stuff[2][1], stuff[3])
 ax.plot(flons, flats, color="blue", transform=ccrs.Geodetic())
 for edge in edges_to_add:
     left, right = edge
-    ax.plot([left[1], right[1]], [left[0], right[1]], color="red", transform=ccrs.Geodetic())
+    ax.plot([left[1], right[1]], [left[0], right[0]], color="red", transform=ccrs.Geodetic())
 
 # heading_pts = []
 # for heading in np.linspace(0, 2*math.pi, 16):

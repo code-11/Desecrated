@@ -249,6 +249,11 @@ def full_circle_focus(lat, lon):
 
     return full_circle(*pt_on_circle, *pt_on_circle2)
 
+def half_circle_center(lat,lon):
+    top = (0, 90)
+    bottom = (0, -90)
+    return ([top[1], lat, bottom[1]],[top[0],lon,bottom[0]])
+
 
 def gen_rnd_pts(n=20):
     xs = 200 * np.random.rand(n) - 100
@@ -263,6 +268,15 @@ def gen_rnd_pts(n=20):
 
 def gen_rnd_color():
     return list(np.random.random(size=3))
+
+
+def smush(bin_parts):
+    try:
+        left, right, center, heading, focus = bin_parts
+        return smush(left) + smush(right)
+    except:
+        return [bin_parts]
+
 
 
 def bin_partition(pts, heading):
@@ -281,7 +295,7 @@ def bin_partition(pts, heading):
                 far_pts.append(pt)
 
         return (
-            bin_partition(near_pts, heading + math.pi / 2), bin_partition(far_pts, heading + math.pi / 2), (lata, lona),
+            bin_partition(near_pts, heading), bin_partition(far_pts, heading), (lata, lona),
             heading, focus_pt)
     else:
         return voronoi_cluster(pts)
@@ -341,9 +355,7 @@ def find_candidate(cluster, angles, baseline_near, baseline_far):
     return None
 
 
-def merge(left_cluster, right_cluster, center, heading, focus):
-    # centerline
-    center_b = destination(*center, heading, 10)
+def merge(left_cluster, right_cluster):
 
     left_base = left_cluster.lowest()
     right_base = right_cluster.lowest()
@@ -386,29 +398,22 @@ def merge(left_cluster, right_cluster, center, heading, focus):
                 print("No contains after double candidate nomination. This is impossible")
 
         left_base, right_base = edges_to_add[-1]
-        if left_base==(2,-2) and right_base==(3,1):
-            herp=None
     return edges_to_add
 
 
-def print_partition(ax, stuff):
+def print_partition(ax, center):
     try:
-        left, right, focus = stuff
-        print_partition(ax, left)
-        print_partition(ax, right)
-
-        part_lats, part_lons = full_circle_focus(*focus)
+        part_lats, part_lons = half_circle_center(*center)
         ax.plot(part_lons, part_lats, color="red", transform=ccrs.Geodetic())
     except:
-        lats, lons = zip(*stuff)
-        ax.scatter(lons, lats, color=gen_rnd_color())
-
+        print("Error "+str(center))
 
 def print_clusters(ax, stuff):
     try:
         left, right, center, heading, focus = stuff
         print_clusters(ax, left)
         print_clusters(ax, right)
+        print_partition(ax, center)
     except:
         stuff.print(ax)
 
@@ -471,7 +476,7 @@ class voronoi_cluster(object):
 
 
 def voronoi():
-    pts = gen_rnd_pts(5)
+    pts = gen_rnd_pts(50)
     stuff = bin_partition(pts, 0)
     return stuff
 #     a=(1,-3)
@@ -571,14 +576,16 @@ stuff = voronoi()
 # circ.print(ax)
 # print(circ.within(20,20))
 
-edges_to_add = merge(*stuff)
+# edges_to_add = merge(*stuff)
 print_clusters(ax, stuff)
+print_partition(ax, stuff)
+print(str(smush(stuff)))
 
-flats, flons = full_circle_hd(stuff[2][0], stuff[2][1], stuff[3])
-ax.plot(flons, flats, color="blue", transform=ccrs.Geodetic())
-for edge in edges_to_add:
-    left, right = edge
-    ax.plot([left[1], right[1]], [left[0], right[0]], color="red", transform=ccrs.Geodetic())
+# flats, flons = full_circle_hd(stuff[2][0], stuff[2][1], stuff[3])
+# ax.plot(flons, flats, color="blue", transform=ccrs.Geodetic())
+# for edge in edges_to_add:
+#     left, right = edge
+#     ax.plot([left[1], right[1]], [left[0], right[0]], color="red", transform=ccrs.Geodetic())
 
 # heading_pts = []
 # for heading in np.linspace(0, 2*math.pi, 16):

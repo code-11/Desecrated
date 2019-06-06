@@ -270,6 +270,14 @@ def gen_rnd_color():
     return list(np.random.random(size=3))
 
 
+def smush_centers(bin_parts):
+    try:
+        left, right, center, heading, focus = bin_parts
+        return smush_centers(left) + [(center,heading, focus)] + smush_centers(right)
+    except:
+        return []
+
+
 def smush(bin_parts):
     try:
         left, right, center, heading, focus = bin_parts
@@ -404,7 +412,7 @@ def merge(left_cluster, right_cluster):
 def print_partition(ax, center):
     try:
         part_lats, part_lons = half_circle_center(*center)
-        ax.plot(part_lons, part_lats, color="red", transform=ccrs.Geodetic())
+        ax.plot(part_lons, part_lats, color="blue", transform=ccrs.Geodetic())
     except:
         print("Error "+str(center))
 
@@ -576,16 +584,33 @@ stuff = voronoi()
 # circ.print(ax)
 # print(circ.within(20,20))
 
-# edges_to_add = merge(*stuff)
-print_clusters(ax, stuff)
-print_partition(ax, stuff)
-print(str(smush(stuff)))
 
-# flats, flons = full_circle_hd(stuff[2][0], stuff[2][1], stuff[3])
-# ax.plot(flons, flats, color="blue", transform=ccrs.Geodetic())
-# for edge in edges_to_add:
-#     left, right = edge
-#     ax.plot([left[1], right[1]], [left[0], right[0]], color="red", transform=ccrs.Geodetic())
+# print_clusters(ax, stuff)
+# print_partition(ax, stuff)
+clusters = smush(stuff)
+extras = smush_centers(stuff)
+print(str(clusters))
+print(str(extras))
+
+# add an additional extra for the seam:
+right = clusters[0]
+left = clusters[-1]
+
+lata, lona = center(right.pts+left.pts)
+focus_pt = focus(lata, lona, 0)
+extras.append(((lata, lona), 0, focus_pt))
+
+for cluster in clusters:
+    cluster.print(ax)
+
+for extra in extras:
+    center, heading_val, focus = extra
+    print_partition(ax, center)
+
+edges_to_add = merge(clusters[0], clusters[1])
+for edge in edges_to_add:
+    left, right = edge
+    ax.plot([left[1], right[1]], [left[0], right[0]], color="red", transform=ccrs.Geodetic())
 
 # heading_pts = []
 # for heading in np.linspace(0, 2*math.pi, 16):

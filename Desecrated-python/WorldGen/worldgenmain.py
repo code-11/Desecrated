@@ -406,7 +406,10 @@ def merge(left_cluster, right_cluster):
                 print("No contains after double candidate nomination. This is impossible")
 
         left_base, right_base = edges_to_add[-1]
-    return edges_to_add
+    new_pts = left_cluster.pts+right_cluster.pts
+    new_edges = left_cluster.edges + edges_to_add + right_cluster.edges
+    to_return = voronoi_cluster(new_pts,new_edges)
+    return to_return
 
 
 def print_partition(ax, center):
@@ -607,7 +610,8 @@ for extra in extras:
     center, heading_val, focus = extra
     print_partition(ax, center)
 
-edges_to_add = merge(clusters[0], clusters[1])
+new_cluster = merge(clusters[0], clusters[1])
+edges_to_add = new_cluster.edges
 for edge in edges_to_add:
     left, right = edge
     ax.plot([left[1], right[1]], [left[0], right[0]], color="red", transform=ccrs.Geodetic())

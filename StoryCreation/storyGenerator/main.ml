@@ -10,6 +10,28 @@ type concept = Death
 			| Life 
 			| Wealth;;
 
+type body_part = Brow
+			| Arm
+			| Leg
+			| Torso
+			| Head
+			| Finger
+			| Toe
+			| Heel
+			| Ankle
+			| Thigh
+			| Shin
+			| Skin
+			| Heart
+			| Lungs
+			| Eye
+			| Ear
+			| Lips
+			| Hair
+			| Stomach;;
+
+type god = string * (concept list);;
+
 type action = string * (concept list);;
 
 type ur_action = string * (action list) * (concept list);;
